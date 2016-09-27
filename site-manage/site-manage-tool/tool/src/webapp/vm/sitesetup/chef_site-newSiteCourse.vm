@@ -172,9 +172,9 @@
 								##			#end 
 								##		/>
                                      ##   <label for="courseDesc$courseNumber" class="skip">$tlang.getString("useOfficialDescription"): $validator.escapeHtml($sectionObject.title) ($sectionObject.eid) $sectionObject.getCategoryDescription()</label>
-				##					#end
-				##				</td>
-				## Change (01) Ends - JD - 20160921
+							        ##	#end
+								## </td>
+				                                ## Change (01) Ends - JD - 20160921
 								</tr>
 							#end
 						#end
