@@ -1,4 +1,6 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-siteInfo-editAccess.vm,v 1.3 2005/05/15 17:05:00 gsilver.umich.edu Exp $ -->
+## Changes
+## 01 - JD - 20160921 - Remove option to enable additional access for all except admins
 ## Site list Sites list on worksite setup home page
 #if ($shoppingPeriodInstructorEditable || $viewDelegatedAccessUsers)
 	<script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage-delegatedaccess.js"></script>
@@ -120,6 +122,9 @@
 		## END site status ##
 		## Additional Access ##
 		#if (!$!disableAdditional)
+		## Change (01) Begins - JD - 20160921
+		# ($canImportArchive)
+		## Change (01) Ends - JD - 20160921
         <fieldset>
 			<legend>
 				<h4>$tlang.getString("ediacc.addit")</h4>
@@ -143,6 +148,9 @@
 			<div class="clear"></div>
 			</p>
         </fieldset>
+	## Change (01) Begins - JD - 20160921
+	#end
+	## Change (01) Ends - JD - 20160921
         #end
         ## END Additional Access ##
 		## Site visibility ##

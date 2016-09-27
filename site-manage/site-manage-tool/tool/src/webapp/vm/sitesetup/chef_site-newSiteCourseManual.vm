@@ -1,4 +1,6 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-newSiteCourseManual.vm,v 1.4 2005/06/03 14:08:16 gsilver.umich.edu Exp $ -->
+## Changes
+## 01 - JD - 20160921 - Remove the option to create manual course if no roster is available for all but admins
 <div class="portletBody container-fluid">
 
 	## bjones86 - SAK-23255
@@ -99,6 +101,9 @@
 							#end
 						</table>	
 					#end
+				## Change (01) Begins - JD - 20160921
+				#if ($canImportArchive)
+				## Change (01) Ends - JD - 20160921
 				<p class="instruction">
 					#if (!$!isFutureTerm)
 						$tlang.getString("man.please_enter")
@@ -158,19 +163,37 @@
 						</tr>
 					</table>
 				</div>
+				## Change (01) Begins - JD - 20160921
+				#end
+				## Change (01) Ends - JD - 20160921
 				<div>
 					#if ($!isFutureTerm)
+					## Change (01) Begins - JD - 20160921
+					#if ($canImportArchive)
+					## Change (01) Ends - JD - 20160921
 						<h4>$tlang.getString("man.siteroster")</h4>
+					## Change (01) Begins - JD - 20160921
+					#end
+					## Change (01) Ends - JD - 20160921
 						<p class="instruction">$tlang.getString("man.notverifyfuture1")$!weeksAhead $tlang.getString("man.notverifyfuture2")</p>
 					#else
 					  #if ($requireAuthorizer)
+					  ## Change (01) Begins - JD - 20160921
+					  #if ($canImportArchive)
+					  ## Change (01) Ends - JD - 20160921
 						  <h4>$tlang.getString("man.siteauth")</h4>
 						  <p class="instruction">$tlang.getString("man.notverify")</p>
+					 ## Change (01) Begins - JD - 20160921
+					 # end
+					 ## Change (01) Ends - JD - 20160921
 						#end
 					#end
 				</div>
 				#if (!$!isFutureTerm)
 				  #if ($requireAuthorizer)
+				  ## Change (01) Begins - JD - 20160921
+				  #if ($canImportArchive)
+				  ## Change (01) Ends - JD - 20160921
 					<div class="shorttext required  form-group row">
 						<label for="uniqname"  class="col-sm-3 form-control-label">
                             <span class="reqStar">*</span>
@@ -194,6 +217,9 @@
 					<p  class="labelindnt">
 						<span class="textPanelFooter">$tlang.getString("man.please")</span>
 					</p>
+                                  ## Change (01) Begins - JD - 20160921
+				  #end
+				  ## Change (01) Ends - JD - 20160921
 					#else 
 					  <input type="hidden" name="uniqname"  value="admin" />
 					  <input type="hidden" name="additional" value="" />
@@ -206,24 +232,42 @@
 			<input type="hidden" name="continue" value="4" />
 			## if site creation is based on template, this could be the final step!
 			#if ($!basedOnTemplate && !$publishTemplate) 
+			        ## Change (01) Begins - JD - 20160921
+				#if ($canImportArchive)
+				## Change (01) Ends - JD - 20160921
 				<div class="instruction" id ="nextInstructions">
 					<span id="templateNonCourseInstruction" style="display:block">$tlang.getString("sitetype.templatefinalstepinstruction")</span>
 				</div>
+				## Change (01) Begins - JD - 20160921
+				#end
+				## Change (01) Ends - JD - 20160921
 			#end
 			<p class="act">
+			## Change (01) Begins - JD - 20160921
+			#if ($canImportArchive)
+			## Change (01) Ends - JD - 20160921
 				<input type="button" name="Add" id="addButton" name="addButton"
 						#if ($!basedOnTemplate) value="$tlang.getString('sitetype.done')" #else value="$tlang.getString('gen.continue')" #end
 						class="active" 
 						accesskey="s" 
 						onclick="SPNR.disableControlsAndSpin( this, null );document.requestCourseForm.option.value='add'; document.requestCourseForm.submit(); return false;" />
+			## Change (01) Ends - JD - 20160921
+			#end
+			## Change (01) Ends - Jd - 20160921
 				<input type="button" name="Back" 
 						value="$tlang.getString('gen.back')"
 						accesskey="b"
 						onclick="SPNR.disableControlsAndSpin( this, null );document.requestCourseForm.option.value='back'; document.requestCourseForm.submit(); return false;" />
+				## Change (01) Begins - JD - 20160921
+				#if ($canImportArchive)
+				## Change (01) Ends - JD - 20160921
 				<input type="button" name="Cancel" 
 						value="$tlang.getString('gen.cancel')"
 						accesskey="x"
 						onclick="SPNR.disableControlsAndSpin( this, null );document.requestCourseForm.option.value='cancel'; document.requestCourseForm.submit(); return false;" />
+				## Change (01) Begins - JD - 20160921
+				#end
+				## Change (01) Ends - JD - 20160921
 				#if( $!contNoRosterEnabled )
 				<input
 					type="button" 
