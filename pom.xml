@@ -116,6 +116,7 @@
                 <module>velocity</module>
                 <module>web</module>
                 <module>webservices</module>
+		<module>attendance-master</module>
             </modules>
         </profile>
         <profile>
