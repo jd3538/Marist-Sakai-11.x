@@ -1,5 +1,8 @@
 package org.sakaiproject.gradebookng.business;
 
+import java.math.RoundingMode;
+import java.text.Format;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -489,13 +492,20 @@ public class GradebookNgBusinessService {
 			// the passed in grades represents a percentage so the number needs to be adjusted back to points
 			final Double newGradePercentage = NumberUtils.toDouble(newGrade);
 			final Double newGradePointsFromPercentage = (newGradePercentage / 100) * maxPoints;
-			newGradeAdjusted = FormatHelper.formatDoubleToTwoDecimalPlaces(newGradePointsFromPercentage);
+			newGradeAdjusted = FormatHelper.formatDoubleToDecimal(newGradePointsFromPercentage);
 
 			// only convert if we had a previous value otherwise it will be out of sync
 			if (StringUtils.isNotBlank(oldGradeAdjusted)) {
+				// To check if our data is out of date, we first compare what we think
+				// is the latest saved score against score stored in the database. As the score
+				// is stored as points, we must convert this to a percentage. To be sure we're
+				// comparing apples with apples, we first determine the number of decimal places
+				// on the score, so the converted points-as-percentage is in the expected format.
+
 				final Double oldGradePercentage = NumberUtils.toDouble(oldGrade);
 				final Double oldGradePointsFromPercentage = (oldGradePercentage / 100) * maxPoints;
-				oldGradeAdjusted = FormatHelper.formatDoubleToTwoDecimalPlaces(oldGradePointsFromPercentage);
+
+				oldGradeAdjusted = FormatHelper.formatDoubleToMatch(oldGradePointsFromPercentage, storedGradeAdjusted);
 			}
 
 			// we dont need processing of the stored grade as the service does that when persisting.
@@ -610,6 +620,8 @@ public class GradebookNgBusinessService {
 	 * @param studentUuids student uuids
 	 * @param uiSettings the settings from the UI that wraps up preferences
 	 * @return
+	 *
+	 * TODO refactor this into a hierarchical method structure
 	 */
 	public List<GbStudentGradeInfo> buildGradeMatrix(final List<Assignment> assignments,
 			final List<String> studentUuids, final GradebookUiSettings uiSettings) throws GbException {
@@ -814,13 +826,12 @@ public class GradebookNgBusinessService {
 					}
 
 					final Double categoryScore = this.gradebookService.calculateCategoryScore(gradebook,
-							student.getId(), category, assignments, gradeMap);
+							student.getId(), category, category.getAssignmentList(), gradeMap);
 
 					// add to GbStudentGradeInfo
 					sg.addCategoryAverage(category.getId(), categoryScore);
 
-					// TODO the TA permission check could reuse this
-					// iteration... check performance.
+					// TODO the TA permission check could reuse this iteration... check performance.
 
 				}
 			}
@@ -1006,15 +1017,7 @@ public class GradebookNgBusinessService {
 
 		final List<GbGroup> rval = new ArrayList<>();
 
-		// get sections
-		// groups handles both
-		/*
-		 * try { Set<Section> sections = courseManagementService.getSections(siteId); for(Section section: sections){ rval.add(new
-		 * GbGroup(section.getEid(), section.getTitle(), GbGroup.Type.SECTION)); } } catch (IdNotFoundException e) { //not a course site or
-		 * no sections, ignore }
-		 */
-
-		// get groups
+		// get groups (handles both groups and sections)
 		try {
 			final Site site = this.siteService.getSite(siteId);
 			final Collection<Group> groups = site.getGroups();
@@ -2030,8 +2033,8 @@ public class GradebookNgBusinessService {
 			final int gradeIndex1 = this.ascendingGrades.indexOf(letterGrade1);
 			final int gradeIndex2 = this.ascendingGrades.indexOf(letterGrade2);
 
-			final Double calculatedGrade1 = Double.valueOf(cg1.getCalculatedGrade());
-			final Double calculatedGrade2 = Double.valueOf(cg2.getCalculatedGrade());
+			final Double calculatedGrade1 = cg1.getCalculatedGrade() == null ? null : Double.valueOf(cg1.getCalculatedGrade());
+			final Double calculatedGrade2 = cg2.getCalculatedGrade() == null ? null : Double.valueOf(cg2.getCalculatedGrade());
 
 			return new CompareToBuilder()
 					.append(gradeIndex1, gradeIndex2)
