@@ -1,0 +1,153 @@
+2015.05.15:
+	- [OWL-1772] Build is no longer dependent on the itext maven repository. Itext version has been bumped up from 5.0.4 -> 5.0.6
+2015.03.17:
+	- [OWL-1574] navIntraTool bar is formatted inconsistently
+2015.01.05:
+	- [OWL-1359] Ported to Sakai 10.3
+	- [OWL-1485] When viewing reports, the date range will now be ignored if the user is not filtering on awarded participants.
+2014.10.16:
+	- [OWL-1372] added the report filtering back
+2014.10.15:
+	- [OWL-1372] Massive reworking of how the ReportRows are generated; the number of queries will be reduced substantially
+        - [OWL-1379] Fix double scroll bars when using Show All option
+2014.10.03:
+        - [OWL-1373] Refactor and improvements to ExtraUserPropertyUtility
+2014.10.01:
+        - [OWL-990] fix for Firefox misreporting mimetypes causing upload failures
+	-[OWL-1346] changed how historical users are retrieved. 
+		-previously came from sakai_grading_event_t (only contains events from within the gradebook tool)
+		-now using gb_grade_record_t (includes both internal & external grades)
+2013.10.08:
+	-[OWL-787] 
+		-re-implemented spinners as iframes coming from reference
+		-added a message to be patient when generating reports which only appears when the site contains over 500 members
+2013.09.04:
+	-[OWL-787] replaced a loop that called SecurityService.unlock once for each member was replaced with Site.getUsersIsAllowed to speed up performance
+2013.08.12:
+	-[OWL-765] added caching to speed up reports
+2013.05.02:
+	-[OWL-439] you can now create a certificate without adding criteria
+2013.04.25:
+	-[OWL-645] change the 'hide requirements from site members" checkbox
+2013.04.01:
+	-[OWL-548] Jquery scripts are now sourced locally
+2013.03.21:
+	-[OWL-434] When downloading the pdf, the content will now appear inline and iframe's height is set to 900px
+2013.03.19:
+	-The tool is now 'neo-prefix aware' - added some java in jsp to accomplish this
+2013.03.15:
+	-[OWL-538] Added spinners for the report view
+2013.03.11:
+	-[OWL-406] Added an option to hide requirements from site members
+2013.03.04:
+	-[OWL-510] Implemented the unassigned field mapping - it's the default, and if you remove a Will Expire Criterion, any expiration date field mappings will be switched to unassigned
+2013.02.28:
+	-[OWL-440] When you don't have a Will Expire Criterion (wechi), you no longer get expiration date as an option when setting the field values on page 3 unless a field value has already been set to expiration date
+2013.02.26:
+	-[OWL-495] [OWL-403] [OWL-402] - Implemented a display options panel to filter the reporting interface
+2013.02.06:
+	-[OWL-306] Fixed the cancel button functionality - clicking 'next' no longer saves anything to the database. Only the "Activate Certificate" button makes changes
+2013.01.16:
+	-[OWL-446] Added better handling when the certificate name or description is too long. UI messages are more appropriate
+2013.01.04:
+	-Began porting to 2.9.
+2013.01.02:
+	-Massive refactoring
+2012.12.10:
+	-For downloading pdfs, changed the http header's content-type to application/octet-stream
+	-As per code review:
+		-Added some exception handling in CertificateListController
+2012.12.07:
+	- Tagged as 2.8.x-owl2
+2012.11.30:
+	-Any instances in the UI that said point(s) or month(s) now say point or points, month or months when appropriate
+	-Improved the feedback messages on create certificate page 2
+2012.11.29:
+	- [OWL-363] added 'accept' attribute to input tag for template selection
+	-On the create certificate page 2, the instructions change when there's no criteria vs when there is criteria
+	-On the same page, the divs that indicate the selected criteria are replaced with li's within a ul
+	-Fixed a consistency issue between the student view and the report regarding unreleased gradebook items. Final grade criteria may have an issue with unreleased gradebook items still
+2012.11.28:
+	-Modified the reporting interface to report on the union of historic users (users who have been graded) and current members who have the certificate.be.awarded permission
+	-Displays the user's role in the site or 'Not a member' if they're no longer a member
+	-Fixed the UI when there are no certificates in the site (for both student and instructor views)
+	-Change the mime type to "application/force-download". Hopefully this will fix the issues where it loads in the iframe
+2012.11.27:
+	-Added and implemented the certificate.be.awarded permission
+	-Added a check to prevent users without that permission from downloading the certificate via the url
+	-Added a page to appear when a user without that permission visits the tool
+	-Reporting interface now reports only on users who have earned grades in the site and who have certificate.be.awarded (which is a problem because deleted users don't have a role for which that permission should be checked against)
+2012.11.26:
+	-Fixed the issue from November 21st. We are now independent of the certificate_award table.
+	-Removed the gradebook item from the Will Expire Criterion
+	-Added a check to prevent users from downloading certificates that they haven't earned (ie. via urls such as http://localhost:8081/portal/tool/565af98f-73cc-4f0f-a0d9-f24cad5200b7/print.form?certId=ff8081813b19b6ee013b19bbf2990003)
+2012.11.22:
+	-Resolved an exception that was thrown when retrieving scores from unreleased gradebook items
+	-Completed i18n
+	-Still need to remove the gradebook item from the expiration criterion
+2012.11.21:
+	-Added the certificate's criteria to the report view to help instructors see why each student was awarded or not
+	-Replaced the 'check status' functionality - it now shows a link directly to your certificate iff you met the criteria. (This opened up a bug preventing certificates to be awarded to new users. This was resolved on the 26th)
+2012.11.20:
+	-Treating employeeNumbers more like the gradebook - user properties are specified in sakai.properties, and there are site role permissions to determine whether a person can see this information in their report
+2012.11.16:
+	-Added the reporting interface for instructors
+	-Removed some privilege escalations
+	- [OWL-303] can't have more than one expiry
+	- [OWL-303] expiry can't be the only criterion
+2012.09.14:
+	-[OWL-307][OWL-332] Added introductory blurbs
+	-[OWL-334] Removed the preview stuff as there didn't seem to be any implementation for any file type. Formatted the date of the award
+	-[OWL-301] Renamed table headings
+2012.09.13:
+	-createCertificatePageTwo said "gradebook is empty" in all cases when a multiple choice variable couldn't be populated. Changed this to get appropriate messages
+2012.09.12:
+	-[OWL-308] If an expiration date is a criterion, the date of issue is the date of grade entry. Otherwise it looks for a gradebook criterion to find a date of entry. If none are found, it uses the date of award (default behaviour)
+	-Added handling in case a gradebook item gets deleted, then a student tries to retrieve their pdf (prints an warn to the log and draws an empty string on the pdf)
+2012.09.11:
+	-Expiry date is now based on the gradebook's date of entry and it shows on the pdfs
+2012.09.10:
+	-When editing a certificate definition, the template fields now default to appropriate values
+2012.09.06:
+	-[OWL-299] Now makes the session switch to admin temporarily to store the pdf in global resources. Works for instructors to create the templates and works for students to view their certificates
+	-[OWL-322] Switched checkboxes to radiobuttons
+2012.08.31:
+	-[OWL-311] Removed the expiry offset from the first page
+2012.08.30:
+	-[OWL-311] Created the criterion for expiration dates some specified # of months after the last time the user was graded on a specified gradebook item
+2012.08.28:
+	-[OWL-311] Swapped pages 2 and 3
+	-[OWL-303] Changed the logic, made some messages prettier (but this will need revision)
+2012.08.27:
+	-[OWL-297] Replaced the unique constraint on CertificateDefinition names with a unique constraint on both CertificateDefinition names & siteIds
+	-[OWL-310] Replaced the lowercase "k" with uppercase in the delete confirmation for the "OK" button
+	-[OWL-305] Removed all instances of the save progress button and the corresponding source code.
+	-[OWL-304] Removed the next button on the fourth page
+	-[OWL-309] Replaced 'Print' with 'View' in 3 places -> once as mentioned in the ticket, once in the page title, and once in a link to the page
+2012.08.23:
+	-Replaced all methods using Spring's @Resource and @Autowired annotation with methods containing ComponentManager calls. Tomcat shuts down properly now. #SpringIsAWasteOfTime
+2012.08.20:
+	-Applied a patch from RSmart that resolves a few issues in hibernate
+2012.03.29:
+	- [OWL-152] added ability to specify expiry offset in certificate definition
+2012.03.19:
+	-Modified pom.xml - rsmart's common-tool-lib is now in a provided scope so that we don't have to manually add the jar to our .m2/repository folders
+	-CertificateDefinition.setDescription() called .trim() which could cause a null pointer exception, so we check this now
+2012.03.13:
+	-The tool was only available to course sites. Just enabled the tool for project sites
+	-Modified the user interface - removed any talk about ${} stuff
+2012.03.12:
+	-When editing the tool, the administrator couldn't switch the pdf file. They'd click 'browse' and select a pdf file, but it wouldn't actually change. I fixed this.
+2012.03.08:
+	-When configuring the tool, RSMART expected users to type in stuff that looks like "${}" into text fields. This will not do. So I replaced the text fields with dropdowns containing the description of the variables that are available, this completely hides the "${}" uglyness from the user
+2012.03.06:
+	-To date: 
+		-checked out the tool from https://source.sakaiproject.org/contrib/rsmart/certification/
+		-got it to build and fixed a few exceptions 
+			-modified poms: 
+				-changed the parent to point to base/org.sakaiproject rather than rsn-base/com.rsmart
+				-added missing dependencies:
+					-model/pom.xml - scheduler-events-model
+					-tool/pom.xml - sakai-metaobj-tool-lib
+		-updated CertificateDefinitionStatusEnumUserType.java: 
+			-an import statement was pointing to a class that had changed packages
