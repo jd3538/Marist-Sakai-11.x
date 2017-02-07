@@ -117,6 +117,7 @@
                 <module>web</module>
                 <module>webservices</module>
 		<module>attendance-master</module>
+		<module>certification</module>
             </modules>
         </profile>
         <profile>
