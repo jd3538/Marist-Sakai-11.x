@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, University of Dayton
+ *  Copyright (c) 2016, University of Dayton
  *
  *  Licensed under the Educational Community License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class AttendanceGradebookProviderImpl implements AttendanceGradebookProvi
      * {@inheritDoc}
      */
     public void init() {
-        log.debug("AttendanceGradebookProviderImpl init()");
+        log.info("init()");
     }
 
     /**
@@ -135,19 +135,24 @@ public class AttendanceGradebookProviderImpl implements AttendanceGradebookProvi
     /**
      * {@inheritDoc}
      */
-    public boolean sendToGradebook(final AttendanceGrade aG) {
-        if(aG == null) {
+    public boolean sendToGradebook(Long id) {
+        if(log.isDebugEnabled()) {
+            log.debug("sendToGradebook");
+        }
+
+        if(id == null) {
             return false;
         }
 
-        final AttendanceSite aS = aG.getAttendanceSite();
-        final String siteID = aS.getSiteID();
+        AttendanceGrade aG = attendanceLogic.getAttendanceGrade(id);
+        AttendanceSite aS = aG.getAttendanceSite();
+        String siteID = aS.getSiteID();
 
         // check if there is a gradebook. siteID ~= gradebookUID
         if (isGradebookDefined(siteID)) {
             String aSUID = getAttendanceUID(aS);
 
-            final Boolean sendToGradebook = aS.getSendToGradebook();
+            Boolean sendToGradebook = aG.getAttendanceSite().getSendToGradebook();
             if(sendToGradebook != null && sendToGradebook) {
                 if(isAssessmentDefined(siteID, aSUID)) {
                     // exists, update current grade
@@ -156,7 +161,7 @@ public class AttendanceGradebookProviderImpl implements AttendanceGradebookProvi
                     return true;
                 } else {
                     //does not exist, add to GB and add all grades
-                    return create(aS);
+                   return create(aS);
                 }
             }
         }
