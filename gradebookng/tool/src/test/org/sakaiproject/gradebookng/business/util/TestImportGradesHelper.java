@@ -1,4 +1,4 @@
-package org.sakaiproject.gradebookng.business.helpers;
+package org.sakaiproject.gradebookng.business.util;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -24,12 +24,9 @@ import org.sakaiproject.service.gradebook.shared.Assignment;
 import org.sakaiproject.service.gradebook.shared.GradeDefinition;
 import org.sakaiproject.user.api.User;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Tests for the ImportGradesHelper class.
  */
-@Slf4j
 public class TestImportGradesHelper {
 
 
@@ -113,7 +110,7 @@ public class TestImportGradesHelper {
 		Assert.assertEquals("comments don't match", "graded", item11.getComment());
 		Assert.assertEquals("scores don't match", "7", item11.getScore());
 
-		final ImportedCell item12 = rows.get(0).getCellMap().get("food");
+		final ImportedCell item12 = rows.get(0).getCellMap().get("Week 2: January 22/23 - 29");
 		Assert.assertEquals("comments don't match", "null", item12.getComment());
 		Assert.assertEquals("scores don't match", "null", item12.getScore());
 
@@ -121,7 +118,7 @@ public class TestImportGradesHelper {
 		Assert.assertEquals("comments don't match", "interesting work", item21.getComment());
 		Assert.assertEquals("scores don't match", "3", item21.getScore());
 
-		final ImportedCell item22 = rows.get(1).getCellMap().get("food");
+		final ImportedCell item22 = rows.get(1).getCellMap().get("Week 2: January 22/23 - 29");
 		Assert.assertEquals("comments don't match", "I'm hungry", item22.getComment());
 		Assert.assertEquals("scores don't match", "42", item22.getScore());
 	}
