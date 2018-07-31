@@ -41,14 +41,15 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.event.cover.NotificationService;
 import org.sakaiproject.exception.IdUnusedException;
+import org.sakaiproject.portal.util.PortalUtils;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService.SelectionType;
 import org.sakaiproject.site.api.SiteService.SortType;
@@ -61,9 +62,11 @@ import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.UserNotificationPreferencesRegistration;
 import org.sakaiproject.user.api.UserNotificationPreferencesRegistrationService;
 import org.sakaiproject.user.cover.UserDirectoryService;
-import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.FormattedText;
+import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.Web;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * UserPrefsTool is the Sakai end-user tool to view and edit one's preferences.
@@ -226,7 +229,7 @@ public class UserPrefsTool
 
 	private List prefOrderItems = new ArrayList();
 
-	private List prefTimeZones = new ArrayList();
+	private List<SelectItem> prefTimeZones = new ArrayList<>();
 
 	private List<SelectItem> prefLocales = new ArrayList<SelectItem>();
 
@@ -373,14 +376,23 @@ public class UserPrefsTool
 	/**
 	 * @return Returns the prefTimeZones.
 	 */
-	public List getPrefTimeZones()
+	public List<SelectItem> getPrefTimeZones()
 	{
 		if (prefTimeZones.size() == 0)
 		{
 			String[] timeZoneArray = TimeZone.getAvailableIDs();
 			Arrays.sort(timeZoneArray);
-			for (int i = 0; i < timeZoneArray.length; i++)
-				prefTimeZones.add(new SelectItem(timeZoneArray[i], timeZoneArray[i]));
+			for (int i = 0; i < timeZoneArray.length; i++) {
+				String tzt = timeZoneArray[i];
+				if (StringUtils.contains(tzt, '/') && StringUtils.indexOf(tzt, "SystemV/") != 0) {
+					String id = tzt;
+					String name = tzt;
+					if (StringUtils.contains(tzt, '_')) {
+						name = StringUtils.replace(tzt, "_", " ");
+					}
+					prefTimeZones.add(new SelectItem(id, name));
+				}
+			}
 		}
 
 		return prefTimeZones;
@@ -390,7 +402,7 @@ public class UserPrefsTool
 	 * @param prefTimeZones
 	 *        The prefTimeZones to set.
 	 */
-	public void setPrefTimeZones(List prefTimeZones)
+	public void setPrefTimeZones(List<SelectItem> prefTimeZones)
 	{
 		if (LOG.isDebugEnabled())
 		{
@@ -2513,11 +2525,12 @@ public class UserPrefsTool
 	public class TermSites
 	{
 		private List<Term> terms;
+		private List <String> termOrder;
 
 		public class Term implements Comparable<Term> {
 			private String label;
 			private List<Site> sites;
-
+			
 			public Term(String label, List<Site> sites) {
 				if (sites.isEmpty()) {
 					throw new RuntimeException("List of sites can't be empty");
@@ -2540,10 +2553,14 @@ public class UserPrefsTool
 			}
 
 			public int compareTo(Term other) {
+				if (termOrder != null && (termOrder.contains(this.label) || termOrder.contains(other.label))) {
+					return(NumberUtils.compare(termOrder.indexOf(this.label), termOrder.indexOf(other.label)));
+				}
+				
 				String myType = this.getType();
 				String theirType = other.getType();
 
-				// Course sites win out over non-course-sites
+				// Otherwise if not found in a term course sites win out over non-course-sites
 				if (myType == null) {
 					return 1;
 				} else if (theirType == null) {
@@ -2579,6 +2596,8 @@ public class UserPrefsTool
 			for (String name : termNames) {
 				terms.add(new Term(name, termsToSites.get(name)));
 			}
+
+			termOrder = PortalUtils.getPortalTermOrder(null);
 
 			Collections.sort(terms);
 		}

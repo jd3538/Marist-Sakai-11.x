@@ -55,8 +55,8 @@
                 var renderedMembers = $(".roster-member").size();
                 // Without filter conditions get more pages if there are more members than rendered and rendered > 0
                 // If you have an active filter maybe you could display less members than total
-                // So get more pages only if rendered match a page size (10 is pagesize)
-                if (roster.site.membersTotal > renderedMembers && renderedMembers > 0 && renderedMembers % 10 === 0) {
+                // So get more pages only if rendered match a page size (10 is default pagesize)
+                if (roster.site.membersTotal > renderedMembers && renderedMembers > 0 && renderedMembers % roster.pageSize === 0) {
                     $("body").data("scroll-roster", true);
                     $(window).trigger('scroll.roster');
                 }
@@ -387,6 +387,8 @@
                 }
 
                 var members = data.members;
+                
+                roster.pageSize = (data.pageSize != undefined) ? data.pageSize : 10;
 
                 if (roster.nextPage === 0) {
                     var membersTotalString = roster.i18n.currently_displaying_participants.replace(/\{0\}/, data.membersTotal);
@@ -465,12 +467,12 @@
                         // We've just pulled the first page ...
                         if (roster.currentState === roster.STATE_OVERVIEW) {
                             // ... and are in OVERVIEW mode, so switch the link back on
-                            $('#navbar_overview_link > span > a').click(function (e) {
+                            $('#navbar_overview_link > span > a').off('click').on('click', function (e) {
                                 return roster.switchState(roster.STATE_OVERVIEW);
                             });
                         } else if (roster.currentState === roster.STATE_ENROLLMENT_STATUS) {
                             // ... and are in ENROLLMENT_STATUS mode, so switch the link back on
-                            $('#navbar_enrollment_status_link > span > a').click(function (e) {
+                            $('#navbar_enrollment_status_link > span > a').off('click').on('click', function (e) {
                                 return roster.switchState(roster.STATE_ENROLLMENT_STATUS);
                             });
                         }
@@ -732,7 +734,7 @@
             return roster.switchState(roster.STATE_OVERVIEW);
         });
 
-        $('#navbar_enrollment_status_link > span > a').click(function (e) {
+        $('#navbar_enrollment_status_link > span > a').on('click', function (e) {
             return roster.switchState(roster.STATE_ENROLLMENT_STATUS);
         });
 

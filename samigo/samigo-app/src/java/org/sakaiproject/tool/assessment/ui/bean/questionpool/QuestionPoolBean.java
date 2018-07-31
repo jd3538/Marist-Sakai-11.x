@@ -60,8 +60,8 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.struts.upload.FormFile;
 import org.osid.shared.SharedException;
+import org.sakaiproject.samigo.util.SamigoConstants;
 import org.sakaiproject.tool.assessment.business.questionpool.QuestionPoolTreeImpl;
 import org.sakaiproject.tool.assessment.data.dao.assessment.ItemMetaData;
 import org.sakaiproject.tool.assessment.data.dao.questionpool.QuestionPoolData;
@@ -134,7 +134,6 @@ public class QuestionPoolBean implements Serializable
   private String[] destItems = {  }; // items to delete
   private String sourcePart = null; // copy all questions from part
   private String destPool="0"; // for Move Pool Destination
-  private FormFile filename; // for import /export
   private int htmlIdLevel; // pass this to javascript:collapseAll()
   private String questionType; // the question type to add
   private int parentPoolSize= 0; // the question type to add
@@ -1199,26 +1198,6 @@ public String getAddOrEdit()
   /**
    * DOCUMENTATION PENDING
    *
-   * @param file DOCUMENTATION PENDING
-   */
-  public void setFilename(FormFile file)
-  {
-    filename = file;
-  }
-
-  /**
-   * DOCUMENTATION PENDING
-   *
-   * @param file DOCUMENTATION PENDING
-   */
-  public FormFile getFilename()
-  {
-    return filename;
-  }
-
-  /**
-   * DOCUMENTATION PENDING
-   *
    * @param int DOCUMENTATION PENDING
    */
   public int getHtmlIdLevel()
@@ -1308,7 +1287,7 @@ public String getAddOrEdit()
 		}
 
 		//Questionpool has been revised
-		EventTrackingService.post(EventTrackingService.newEvent("sam.questionpool.questionmoved", "/sam/" +AgentFacade.getCurrentSiteId() + "/sourceId=" + sourceId + " destId=" + destId, true));
+		EventTrackingService.post(EventTrackingService.newEvent(SamigoConstants.EVENT_QUESTIONPOOL_QUESTIONMOVED, "/sam/" +AgentFacade.getCurrentSiteId() + "/sourceId=" + sourceId + " destId=" + destId, true));
 
 
 		setOutComeTree(originId);
@@ -1431,7 +1410,6 @@ public String getAddOrEdit()
 							delegate.addItemToPool(copyItemFacadeId, new Long(
 									destId));
 						}
-
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -1496,7 +1474,7 @@ public String getAddOrEdit()
        delegate.removeQuestionFromPool(itemid, new Long(sourceId));
 
        //Questionpool has been deleted
-       EventTrackingService.post(EventTrackingService.newEvent("sam.questionpool.deleteitem", "/sam/" +AgentFacade.getCurrentSiteId() + "/removed itemId=" + itemid, true));
+       EventTrackingService.post(EventTrackingService.newEvent(SamigoConstants.EVENT_QUESTIONPOOL_DELETEITEM, "/sam/" +AgentFacade.getCurrentSiteId() + "/removed itemId=" + itemid, true));
 
 
        // check to see if any pools are linked to this item
@@ -1824,7 +1802,7 @@ public String getAddOrEdit()
 
       delegate.removeQuestionPoolAccess(tree, AgentFacade.getAgentString(), poolId, QuestionPoolData.READ_COPY);
       //Questionpool has been unshared
-      EventTrackingService.post(EventTrackingService.newEvent("sam.questionpool.unshare", "/sam/" +AgentFacade.getCurrentSiteId() + "/unshared poolId=" + poolId, true));
+      EventTrackingService.post(EventTrackingService.newEvent(SamigoConstants.EVENT_QUESTIONPOOL_UNSHARE, "/sam/" +AgentFacade.getCurrentSiteId() + "/unshared poolId=" + poolId, true));
       
       buildTree();
       setQpDataModelByLevel();
@@ -1895,7 +1873,7 @@ String poolId = ContextUtil.lookupParam("qpid");
         delegate.deletePool(poolId, AgentFacade.getAgentString(), tree);
 
           //Questionpool has been deleted
-          EventTrackingService.post(EventTrackingService.newEvent("sam.questionpool.delete", "/sam/" +AgentFacade.getCurrentSiteId() + "/removed poolId=" + poolId, true));
+          EventTrackingService.post(EventTrackingService.newEvent(SamigoConstants.EVENT_QUESTIONPOOL_DELETE, "/sam/" +AgentFacade.getCurrentSiteId() + "/removed poolId=" + poolId, true));
 
         }
 	buildTree();
@@ -3257,7 +3235,7 @@ String poolId = ContextUtil.lookupParam("qpid");
 			} else {
 				userEID = "[current user is null]";
 			}
-			EventTrackingService.post(EventTrackingService.newEvent("sam.questionpool.transfer", "pool(s) [" + poolIdString + "] transferred " +
+			EventTrackingService.post(EventTrackingService.newEvent(SamigoConstants.EVENT_QUESTIONPOOL_TRANSFER, "pool(s) [" + poolIdString + "] transferred " +
 					"from " + userEID + " to " + this.ownerId + " on " + now , true));
 
 			buildTree();

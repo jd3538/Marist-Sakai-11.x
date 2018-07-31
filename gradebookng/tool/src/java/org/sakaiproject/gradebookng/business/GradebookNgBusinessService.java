@@ -1,8 +1,6 @@
 package org.sakaiproject.gradebookng.business;
 
-import java.math.RoundingMode;
-import java.text.Format;
-import java.text.NumberFormat;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +29,7 @@ import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.coursemanagement.api.CourseManagementService;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
+import org.sakaiproject.gradebookng.business.exception.GbAccessDeniedException;
 import org.sakaiproject.gradebookng.business.exception.GbException;
 import org.sakaiproject.gradebookng.business.model.GbCourseGrade;
 import org.sakaiproject.gradebookng.business.model.GbGradeCell;
@@ -119,6 +118,8 @@ public class GradebookNgBusinessService {
 
 	public static final String ASSIGNMENT_ORDER_PROP = "gbng_assignment_order";
 
+	private Collator collator = Collator.getInstance();
+
 	/**
 	 * Get a list of all users in the current site that can have grades
 	 *
@@ -170,9 +171,11 @@ public class GradebookNgBusinessService {
 				userUuids.retainAll(groupMembers);
 			}
 
+			final GbRole role = this.getUserRole(siteId);
+
 			// if TA, pass it through the gradebook permissions (only if there
 			// are permissions)
-			if (this.getUserRole(siteId) == GbRole.TA) {
+			if (role == GbRole.TA) {
 				final User user = getCurrentUser();
 
 				// if there are permissions, pass it through them
@@ -203,7 +206,10 @@ public class GradebookNgBusinessService {
 			return new ArrayList<>(userUuids);
 
 		} catch (final IdUnusedException e) {
-			e.printStackTrace();
+			log.warn("IdUnusedException trying to getGradeableUsers", e);
+			return null;
+		} catch (final GbAccessDeniedException e) {
+			log.warn("GbAccessDeniedException trying to getGradeableUsers", e);
 			return null;
 		}
 	}
@@ -241,13 +247,19 @@ public class GradebookNgBusinessService {
 	 * @return the gradebook for the site
 	 */
 	private Gradebook getGradebook(final String siteId) {
+		Gradebook gradebook = null;
 		try {
-			final Gradebook gradebook = (Gradebook) this.gradebookService.getGradebook(siteId);
-			return gradebook;
+			gradebook = (Gradebook) this.gradebookService.getGradebook(siteId);
 		} catch (final GradebookNotFoundException e) {
-			log.error("No gradebook in site: " + siteId);
-			return null;
+			log.debug("Request made for inaccessible, adding gradebookUid=" + siteId);
+			this.gradebookFrameworkService.addGradebook(siteId,siteId);
+			try {
+				gradebook = (Gradebook) this.gradebookService.getGradebook(siteId);
+			} catch (GradebookNotFoundException e2) {
+				log.error("Request made and could not add inaccessible gradebookUid=" + siteId);
+			}
 		}
+		return gradebook;
 	}
 
 	/**
@@ -349,12 +361,24 @@ public class GradebookNgBusinessService {
 
 		List<CategoryDefinition> rval = new ArrayList<>();
 
-		if (gradebook != null && categoriesAreEnabled()) {
+		if(gradebook == null) {
+			return rval;
+		}
+
+		if (categoriesAreEnabled()) {
 			rval = this.gradebookService.getCategoryDefinitions(gradebook.getUid());
 		}
 
+		GbRole role;
+		try {
+			role = this.getUserRole(siteId);
+		} catch (final GbAccessDeniedException e) {
+			log.warn("GbAccessDeniedException trying to getGradebookCategories", e);
+			return rval;
+		}
+
 		// filter for TAs
-		if (this.getUserRole(siteId) == GbRole.TA) {
+		if (role == GbRole.TA) {
 			final User user = getCurrentUser();
 
 			// build a list of categoryIds
@@ -488,6 +512,17 @@ public class GradebookNgBusinessService {
 		String oldGradeAdjusted = oldGrade;
 		String storedGradeAdjusted = storedGrade;
 
+		// Fix a problem when the grades comes from the old Gradebook API with locale separator, always compare the values using the same
+		// separator
+		if (StringUtils.isNotBlank(oldGradeAdjusted)) {
+			oldGradeAdjusted = oldGradeAdjusted.replace(newGradeAdjusted.contains(",") ? "." : ",",
+					newGradeAdjusted.contains(",") ? "," : ".");
+		}
+		if (StringUtils.isNotBlank(storedGradeAdjusted)) {
+			storedGradeAdjusted = storedGradeAdjusted.replace(newGradeAdjusted.contains(",") ? "." : ",",
+					newGradeAdjusted.contains(",") ? "," : ".");
+		}
+
 		if (gradingType == GbGradingType.PERCENTAGE) {
 			// the passed in grades represents a percentage so the number needs to be adjusted back to points
 			final Double newGradePercentage = NumberUtils.toDouble(newGrade);
@@ -535,7 +570,7 @@ public class GradebookNgBusinessService {
 		// no change
 		if (StringUtils.equals(storedGradeAdjusted, newGradeAdjusted)) {
 			final Double storedGradePoints = NumberUtils.toDouble(storedGradeAdjusted);
-			if (storedGradePoints.compareTo(maxPoints) > 0) {
+			if (storedGradePoints != null && storedGradePoints.compareTo(maxPoints) > 0) {
 				return GradeSaveResponse.OVER_LIMIT;
 			} else {
 				return GradeSaveResponse.NO_CHANGE;
@@ -648,7 +683,12 @@ public class GradebookNgBusinessService {
 		final String currentUserUuid = getCurrentUser().getId();
 
 		// get role for current user
-		final GbRole role = this.getUserRole();
+		GbRole role;
+		try {
+			role = this.getUserRole();
+		} catch (final GbAccessDeniedException e) {
+			throw new GbException("Error getting role for current user", e);
+		}
 
 		// get uuids as list of Users.
 		// this gives us our base list and will be sorted as per our desired
@@ -1026,9 +1066,17 @@ public class GradebookNgBusinessService {
 			log.error("Error retrieving groups", e);
 		}
 
+		GbRole role;
+		try {
+			role = this.getUserRole(siteId);
+		} catch (final GbAccessDeniedException e) {
+			log.warn("GbAccessDeniedException trying to getGradebookCategories", e);
+			return rval;
+		}
+
 		// if user is a TA, get the groups they can see and filter the GbGroup
 		// list to keep just those
-		if (this.getUserRole(siteId) == GbRole.TA) {
+		if (role == GbRole.TA) {
 			final Gradebook gradebook = this.getGradebook(siteId);
 			final User user = getCurrentUser();
 
@@ -1177,8 +1225,7 @@ public class GradebookNgBusinessService {
 		try {
 			this.siteService.getSite(siteId);
 		} catch (final IdUnusedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn("IdUnusedException trying to updateAssignmentCategorizedOrder", e);
 			return;
 		}
 
@@ -1222,8 +1269,9 @@ public class GradebookNgBusinessService {
 	class LastNameComparator implements Comparator<User> {
 		@Override
 		public int compare(final User u1, final User u2) {
-			return new CompareToBuilder().append(u1.getLastName(), u2.getLastName())
-					.append(u1.getFirstName(), u2.getFirstName()).toComparison();
+			collator.setStrength(Collator.PRIMARY);
+			return new CompareToBuilder().append(u1.getLastName(), u2.getLastName(), collator)
+					.append(u1.getFirstName(), u2.getFirstName(), collator).toComparison();
 		}
 	}
 
@@ -1234,8 +1282,9 @@ public class GradebookNgBusinessService {
 	class FirstNameComparator implements Comparator<User> {
 		@Override
 		public int compare(final User u1, final User u2) {
-			return new CompareToBuilder().append(u1.getFirstName(), u2.getFirstName())
-					.append(u1.getLastName(), u2.getLastName()).toComparison();
+			collator.setStrength(Collator.PRIMARY);
+			return new CompareToBuilder().append(u1.getFirstName(), u2.getFirstName(), collator)
+					.append(u1.getLastName(), u2.getLastName(), collator).toComparison();
 		}
 	}
 
@@ -1551,9 +1600,10 @@ public class GradebookNgBusinessService {
 	/**
 	 * Get the role of the current user in the current site
 	 *
-	 * @return Role
+	 * @return GbRole
+	 * @throws GbAccessDeniedException if something goes wrong checking the site or user permissions
 	 */
-	public GbRole getUserRole() {
+	public GbRole getUserRole() throws GbAccessDeniedException {
 		final String siteId = getCurrentSiteId();
 		return this.getUserRole(siteId);
 	}
@@ -1562,9 +1612,10 @@ public class GradebookNgBusinessService {
 	 * Get the role of the current user in the given site
 	 *
 	 * @param siteId the siteId to check
-	 * @return Role
+	 * @return GbRole for the current user
+	 * @throws GbAccessDeniedException if something goes wrong checking the site or user permissions
 	 */
-	public GbRole getUserRole(final String siteId) {
+	public GbRole getUserRole(final String siteId) throws GbAccessDeniedException {
 
 		final String userId = getCurrentUser().getId();
 
@@ -1572,8 +1623,7 @@ public class GradebookNgBusinessService {
 		try {
 			siteRef = this.siteService.getSite(siteId).getReference();
 		} catch (final IdUnusedException e) {
-			e.printStackTrace();
-			return null;
+			throw new GbAccessDeniedException(e);
 		}
 
 		GbRole rval;
@@ -1585,7 +1635,7 @@ public class GradebookNgBusinessService {
 		} else if (this.securityService.unlock(userId, GbRole.STUDENT.getValue(), siteRef)) {
 			rval = GbRole.STUDENT;
 		} else {
-			throw new SecurityException("Current user does not have a valid section.role.x permission");
+			throw new GbAccessDeniedException("Current user does not have a valid section.role.x permission");
 		}
 
 		return rval;
@@ -1612,7 +1662,13 @@ public class GradebookNgBusinessService {
 		// if instructor or TA, skip this check
 		// permission checks are still applied at the assignment level in the
 		// GradebookService
-		final GbRole role = this.getUserRole(siteId);
+		GbRole role;
+		try {
+			role = this.getUserRole(siteId);
+		} catch (final GbAccessDeniedException e) {
+			log.warn("GbAccessDeniedException trying to getGradesForStudent", e);
+			return rval;
+		}
 
 		if (role == GbRole.STUDENT) {
 			final boolean released = gradebook.isAssignmentsDisplayed();
@@ -1701,7 +1757,7 @@ public class GradebookNgBusinessService {
 				rval.add(getUser(userUuid));
 			}
 		} catch (final IdUnusedException e) {
-			e.printStackTrace();
+			log.warn("IdUnusedException trying to getTeachingAssistants", e);
 		}
 
 		return rval;
@@ -1753,7 +1809,13 @@ public class GradebookNgBusinessService {
 
 		final String siteId = getCurrentSiteId();
 
-		final GbRole role = this.getUserRole(siteId);
+		GbRole role;
+		try {
+			role = this.getUserRole(siteId);
+		} catch (final GbAccessDeniedException e) {
+			log.warn("GbAccessDeniedException trying to check isCourseGradeVisible", e);
+			return false;
+		}
 
 		// if instructor, allowed
 		if (role == GbRole.INSTRUCTOR) {
@@ -1789,6 +1851,7 @@ public class GradebookNgBusinessService {
 		}
 
 		// other roles not yet catered for, catch all.
+		log.warn("User: " + userUuid + " does not have a valid Gradebook related role in site: " + siteId);
 		return false;
 	}
 
