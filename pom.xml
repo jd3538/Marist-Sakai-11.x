@@ -118,6 +118,7 @@
                 <module>webservices</module>
 		<module>attendance-master</module>
 		<module>certification</module>
+		<module>SakaiXAPI-Provider-11.x</module>
             </modules>
         </profile>
         <profile>
@@ -203,6 +204,7 @@
                 <module>web</module>
                 <module>webservices</module>
                 <module>yaft</module>
+		<module>SakaiXAPI-Provider-11.x</module>
             </modules>
         </profile>
         
